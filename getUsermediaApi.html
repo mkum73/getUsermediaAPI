@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Working with Camera</title>
+  <style>
+  video { 
+    border: 2px solid #666; 
+    transform: rotateY(180deg);
+  }
+  </style>
+</head>
+<body>
+  
+<video></video>
+<br>
+<button>Start camera</button>
+
+<script>
+navigator.mediaDevices = navigator.mediaDevices || ((navigator.mozGetUserMedia || navigator.webkitGetUserMedia) ? {
+   getUserMedia: function(c) {
+     return new Promise(function(y, n) {
+       (navigator.mozGetUserMedia ||
+        navigator.webkitGetUserMedia).call(navigator, c, y, n);
+     });
+   }
+} : null);
+if (!navigator.mediaDevices) {
+  throw new Error("getUserMedia() not supported.");
+}
+
+var video = document.querySelector('video');
+var constraints = {
+  audio: false,
+  video: true
+};
+function startCamera() {
+  return navigator.mediaDevices.getUserMedia(constraints)
+  .then(function(stream) {
+    video.src = URL.createObjectURL(stream);
+    video.play();
+    return stream;  // so chained promises can benefit
+  })
+  .catch(function(error) {
+    console.error(error);
+  });
+}
+var streamOn = null;
+document.querySelector('button').onclick = function() {
+  var button = this;
+  if (streamOn !== null) {
+    streamOn.stop();
+    URL.revokeObjectURL(video.src);  // cleanin up
+    button.textContent = 'Start camera';
+  } else {
+    button.textContent = 'Starting camera';
+    startCamera().then(function(stream) {
+      streamOn = stream;
+      button.textContent = 'Stop camera';
+    });
+  }
+}
+</script>
+</body>
+</html>
+
